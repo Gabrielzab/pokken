@@ -1,0 +1,560 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokédex Pixel — Johto & Sinnoh</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--amarelo:#ffcb05;--preto:#111}
+body{
+  min-height:100vh;background:#202020;color:white;
+  background-image:linear-gradient(45deg,#191919 25%,transparent 25%,transparent 75%,#191919 75%),linear-gradient(45deg,#191919 25%,transparent 25%,transparent 75%,#191919 75%);
+  background-size:24px 24px;background-position:0 0,12px 12px;
+  font-family:"Press Start 2P",monospace
+}
+header{text-align:center;padding:28px 12px;background:#101010;border-bottom:6px solid #000;box-shadow:0 6px #333}
+header h1{font-size:clamp(16px,3vw,27px);color:var(--amarelo);text-shadow:4px 4px #000;line-height:1.8}
+header p{font-size:9px;line-height:2.4;margin-top:10px;color:#ddd}
+.controles{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:28px auto 22px;padding:0 16px}
+button{font-family:inherit;cursor:pointer;border:4px solid #000;box-shadow:5px 5px #000;transition:transform .12s}
+button:active{transform:translate(3px,3px);box-shadow:1px 1px #000}
+.btn{background:#555;color:white;padding:14px;font-size:9px;line-height:1.8}
+.btn.ativo{background:var(--amarelo);color:#111}
+.busca{max-width:620px;margin:0 auto 20px;padding:0 18px}
+.busca input{width:100%;padding:17px;border:5px solid #000;outline:none;font-family:inherit;font-size:10px;box-shadow:6px 6px #000}
+#status{text-align:center;color:var(--amarelo);font-size:9px;line-height:2.3;margin:20px;padding:0 10px}
+.pokedex{width:94%;max-width:1450px;margin:auto;padding:24px;background:#303030;border:6px solid #000;box-shadow:10px 10px #000}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:22px}
+.pokemon-card{position:relative;min-height:255px;padding:14px;cursor:pointer;border:5px solid #000;box-shadow:6px 6px #000;transition:transform .15s,filter .15s;overflow:hidden;color:white}
+.pokemon-card:hover{transform:translateY(-5px);filter:brightness(1.13)}
+.pokemon-card:focus-visible{outline:4px solid white;outline-offset:3px}
+.pokemon-card::after{content:"";position:absolute;width:7px;height:7px;right:16px;top:20px;background:#fff9;box-shadow:12px 8px #ffffff66,-10px 17px #ffffff55;animation:brilhos 1.3s steps(2) infinite;pointer-events:none}
+@keyframes brilhos{50%{transform:translate(-4px,4px);opacity:.3}}
+.numero{font-size:8px;text-shadow:2px 2px #000}
+.sprite{display:block;width:150px;height:125px;object-fit:contain;margin:12px auto 6px;image-rendering:pixelated;filter:drop-shadow(4px 5px #0005)}
+.nome{text-align:center;font-size:10px;line-height:1.8;text-shadow:2px 2px #000;margin-bottom:10px}
+.tipos{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.tipo{padding:7px 6px;border:3px solid #000;background:#0007;font-size:7px;text-shadow:1px 1px #000;line-height:1.6}
+.normal{background:#8d8d6f}.fogo{background:#e85d04}.agua{background:#1976d2}
+.eletrico{background:#b89500}.grama{background:#3d9b40}.gelo{background:#43a6b8}
+.lutador{background:#a52a2a}.veneno{background:#8e44ad}.terra{background:#a87932}
+.voador{background:#665ac7}.psiquico{background:#d63384}.inseto{background:#718c16}
+.pedra{background:#77633a}.fantasma{background:#5e4381}.dragao{background:#4b32a8}
+.sombrio{background:#4a3b32}.aco{background:#687080}.fada{background:#d66ba0}
+.modal{position:fixed;inset:0;background:#000e;display:none;align-items:center;justify-content:center;padding:16px;z-index:1000}
+.modal.ativo{display:flex}
+.modal-caixa{position:relative;width:100%;max-width:1000px;max-height:94vh;overflow-y:auto;border:7px solid #000;box-shadow:10px 10px #000}
+.fechar{position:sticky;float:right;right:10px;top:10px;width:42px;height:42px;background:#e63946;color:white;font-size:13px;z-index:5;margin:10px -42px -52px 0}
+.modal-topo{text-align:center;padding:24px 55px 22px 15px;border-bottom:6px solid #000}
+.modal-topo h2{font-size:clamp(13px,2vw,21px);text-shadow:3px 3px #000;line-height:1.8;overflow-wrap:anywhere}
+.modal-topo p{font-size:9px;margin-top:8px}
+.modal-corpo{padding:22px;display:grid;grid-template-columns:minmax(250px,350px) 1fr;gap:22px}
+.sprite-container{min-height:330px;position:relative;overflow:hidden;border:5px solid #000;display:flex;align-items:center;justify-content:center;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:16px 16px}
+.sprite-container::before{content:"";position:absolute;bottom:38px;width:210px;height:24px;background:#0003;border:3px solid #0002;border-radius:50%;animation:sombra 1s steps(3) infinite}
+@keyframes sombra{50%{transform:scaleX(.75);opacity:.5}}
+.sprite-grande{position:relative;z-index:2;width:min(100%,310px);height:300px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(7px 7px #0004)}
+.informacoes{display:flex;flex-direction:column;gap:13px;min-width:0}
+.bloco{padding:14px;background:#0005;border:4px solid #000;min-width:0}
+.bloco h3{font-size:9px;color:var(--amarelo);margin-bottom:13px;line-height:1.8}
+.bloco p{font-size:9px;line-height:2.2;overflow-wrap:anywhere}
+.habilidade{display:inline-block;margin:3px;padding:8px;border:3px solid #000;background:#ffffff1a;font-size:7px;line-height:1.8}
+.status-linha{margin-bottom:12px}
+.status-nome{font-size:7px;margin-bottom:5px;line-height:1.8}
+.barra{height:16px;background:#111;border:3px solid #000}
+.barra div{height:100%;background:#ffcb05;transition:width .5s}
+.rodape-modal{font-size:8px;line-height:2;color:#eee;margin-top:12px}
+footer{text-align:center;padding:35px 12px;color:#aaa;font-size:7px;line-height:2.5}
+@media(max-width:720px){
+ .modal-corpo{grid-template-columns:1fr;padding:12px}
+ .sprite-container{min-height:260px}.sprite-grande{height:240px}
+ .pokedex{padding:14px;width:96%}
+ .grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:15px}
+ .pokemon-card{padding:10px;min-height:225px}
+ .sprite{width:125px;height:115px}
+ .bloco p{font-size:8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>POKÉDEX PIXEL</h1>
+  <p>GERAÇÕES II E IV<br>JOHTO • SINNOH</p>
+</header>
+
+<div class="controles">
+  <button id="gen2" class="btn ativo">GERAÇÃO II — JOHTO</button>
+  <button id="gen4" class="btn">GERAÇÃO IV — SINNOH</button>
+</div>
+
+<div class="busca">
+  <input id="pesquisa" placeholder="🔎 NOME OU NÚMERO..." autocomplete="off">
+</div>
+
+<div id="status" aria-live="polite">INICIANDO POKÉDEX...</div>
+
+<main class="pokedex">
+  <div id="grid" class="grid"></div>
+</main>
+
+<footer>POKÉDEX PIXEL ANIMADA<br><br>DADOS DA POKÉAPI</footer>
+
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalNome">
+  <div id="modalCaixa" class="modal-caixa">
+    <button id="fechar" class="fechar" aria-label="Fechar ficha">X</button>
+    <div id="modalTopo" class="modal-topo">
+      <h2 id="modalNome">POKÉMON</h2>
+      <p id="modalNumero">#000</p>
+    </div>
+    <div class="modal-corpo">
+      <div id="spriteContainer" class="sprite-container">
+        <img id="spriteGrande" class="sprite-grande" alt="Pokémon animado">
+      </div>
+      <div class="informacoes">
+        <div class="bloco"><h3>TIPOS</h3><div id="modalTipos" class="tipos"></div></div>
+        <div class="bloco"><h3>DESCRIÇÃO</h3><p id="descricao">Carregando descrição...</p></div>
+        <div class="bloco"><h3>HABILIDADES</h3><div id="habilidades">Carregando...</div></div>
+        <div class="bloco"><h3>ATRIBUTOS</h3><div id="statusPokemon"></div></div>
+        <div class="bloco"><h3>INFORMAÇÕES</h3><p id="informacoesPokemon"></p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const API = "https://pokeapi.co/api/v2";
+
+const geracoes = {
+  2: {inicio:152, fim:251, nome:"JOHTO"},
+  4: {inicio:387, fim:493, nome:"SINNOH"}
+};
+
+const tiposPT = {
+  normal:"NORMAL", fire:"FOGO", water:"ÁGUA", electric:"ELÉTRICO",
+  grass:"GRAMA", ice:"GELO", fighting:"LUTADOR", poison:"VENENO",
+  ground:"TERRA", flying:"VOADOR", psychic:"PSÍQUICO", bug:"INSETO",
+  rock:"PEDRA", ghost:"FANTASMA", dragon:"DRAGÃO", dark:"SOMBRIO",
+  steel:"AÇO", fairy:"FADA"
+};
+
+const classesTipo = {
+  normal:"normal", fire:"fogo", water:"agua", electric:"eletrico",
+  grass:"grama", ice:"gelo", fighting:"lutador", poison:"veneno",
+  ground:"terra", flying:"voador", psychic:"psiquico", bug:"inseto",
+  rock:"pedra", ghost:"fantasma", dragon:"dragao", dark:"sombrio",
+  steel:"aco", fairy:"fada"
+};
+
+const coresTipo = {
+  normal:"#8d8d6f", fire:"#e85d04", water:"#1976d2", electric:"#b89500",
+  grass:"#3d9b40", ice:"#43a6b8", fighting:"#a52a2a", poison:"#8e44ad",
+  ground:"#a87932", flying:"#665ac7", psychic:"#d63384", bug:"#718c16",
+  rock:"#77633a", ghost:"#5e4381", dragon:"#4b32a8", dark:"#4a3b32",
+  steel:"#687080", fairy:"#d66ba0"
+};
+
+const statsPT = {
+  hp:"VIDA", attack:"ATAQUE", defense:"DEFESA",
+  "special-attack":"ATAQUE ESPECIAL",
+  "special-defense":"DEFESA ESPECIAL", speed:"VELOCIDADE"
+};
+
+const cacheEspecies = new Map();
+const cacheHabilidades = new Map();
+const cacheTraducao = new Map();
+const cacheNomes = new Map();
+
+let pokemonAtual = [];
+let geracaoAtual = 2;
+let pedidoModal = 0;
+let carregamento = 0;
+
+const $ = id => document.getElementById(id);
+
+function formatarNome(nome) {
+  return nome.split("-").map(p =>
+    p.charAt(0).toUpperCase() + p.slice(1)
+  ).join(" ");
+}
+
+async function obterJSON(url) {
+  const resposta = await fetch(url);
+  if (!resposta.ok) throw new Error("Falha ao carregar dados");
+  return resposta.json();
+}
+
+/* Traduz textos quando a API não tem a versão portuguesa.
+   Requer internet; se o serviço falhar, mostra uma mensagem
+   em português em vez de apresentar inglês como tradução. */
+async function traduzirTexto(texto) {
+  if (!texto) return "";
+
+  const original = texto.replace(/\s+/g, " ").trim();
+  if (cacheTraducao.has(original)) return cacheTraducao.get(original);
+
+  try {
+    const url = "https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(original.slice(0, 450)) +
+      "&langpair=en|pt-BR";
+
+    const dados = await obterJSON(url);
+    const traducao = dados.responseData?.translatedText;
+
+    if (dados.responseStatus === 200 && traducao &&
+        !/MYMEMORY WARNING|PLEASE SELECT|QUERY LENGTH LIMIT/i.test(traducao)) {
+      const resultado = traducao.replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, "&");
+      cacheTraducao.set(original, resultado);
+      return resultado;
+    }
+  } catch (erro) {
+    console.warn("Tradução indisponível:", erro);
+  }
+
+  return "";
+}
+
+async function buscarPokemon(id) {
+  try {
+    return await obterJSON(`${API}/pokemon/${id}`);
+  } catch {
+    return null;
+  }
+}
+
+async function buscarEspecie(id) {
+  if (cacheEspecies.has(id)) return cacheEspecies.get(id);
+
+  try {
+    const dado = await obterJSON(`${API}/pokemon-species/${id}`);
+    cacheEspecies.set(id, dado);
+    return dado;
+  } catch {
+    return null;
+  }
+}
+
+function spriteAnimado(pokemon) {
+  const sprites = pokemon.sprites || {};
+  const animado =
+    sprites.versions?.["generation-v"]?.["black-white"]?.animated;
+
+  return animado?.front_default ||
+    sprites.other?.showdown?.front_default ||
+    sprites.front_default ||
+    sprites.other?.["official-artwork"]?.front_default || "";
+}
+
+function spriteCartao(pokemon) {
+  return spriteAnimado(pokemon);
+}
+
+function nomePortugues(especie, nomeOriginal) {
+  const nome = especie?.names?.find(n =>
+    n.language.name === "pt"
+  );
+  return nome?.name || formatarNome(nomeOriginal);
+}
+
+async function obterNomePT(pokemon) {
+  if (cacheNomes.has(pokemon.id)) return cacheNomes.get(pokemon.id);
+
+  const especie = await buscarEspecie(pokemon.id);
+  const nome = nomePortugues(especie, pokemon.name);
+
+  cacheNomes.set(pokemon.id, nome);
+  return nome;
+}
+
+async function descricaoPortugues(especie) {
+  if (!especie) {
+    return "Não foi possível carregar a descrição. Verifique sua conexão e tente novamente.";
+  }
+
+  const entradas = especie.flavor_text_entries || [];
+
+  const entradaPT = entradas.find(e =>
+    e.language.name === "pt"
+  );
+
+  if (entradaPT) {
+    return entradaPT.flavor_text
+      .replace(/[\f\n\r]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const entradaEN = entradas.find(e =>
+    e.language.name === "en"
+  );
+
+  if (entradaEN) {
+    const original = entradaEN.flavor_text
+      .replace(/[\f\n\r]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const traducao = await traduzirTexto(original);
+    if (traducao) return traducao;
+
+    return "A descrição original está disponível, mas a tradução automática falhou. Tente abrir esta ficha novamente com a internet funcionando.";
+  }
+
+  return "Não há uma descrição disponível para este Pokémon na base de dados.";
+}
+
+async function buscarHabilidade(url) {
+  if (cacheHabilidades.has(url)) return cacheHabilidades.get(url);
+
+  try {
+    const habilidade = await obterJSON(url);
+    const nomePT = habilidade.names?.find(n =>
+      n.language.name === "pt"
+    );
+
+    let nome = nomePT?.name;
+
+    if (!nome) {
+      const entradaEN = habilidade.names?.find(n =>
+        n.language.name === "en"
+      );
+      nome = entradaEN?.name || formatarNome(habilidade.name);
+      nome = await traduzirTexto(nome) || nome;
+    }
+
+    cacheHabilidades.set(url, nome);
+    return nome;
+  } catch {
+    return "Habilidade indisponível";
+  }
+}
+
+function criarTipos(tipos) {
+  return tipos.map(item => {
+    const chave = item.type.name;
+    const span = document.createElement("span");
+    span.className = `tipo ${classesTipo[chave] || "normal"}`;
+    span.textContent = tiposPT[chave] || chave.toUpperCase();
+    return span;
+  });
+}
+
+async function carregarGeracao(geracao) {
+  geracaoAtual = geracao;
+  const token = ++carregamento;
+
+  pokemonAtual = [];
+  $("grid").innerHTML = "";
+  $("pesquisa").value = "";
+
+  $("gen2").classList.toggle("ativo", geracao === 2);
+  $("gen4").classList.toggle("ativo", geracao === 4);
+
+  const config = geracoes[geracao];
+  const total = config.fim - config.inicio + 1;
+
+  $("status").textContent = `CARREGANDO ${config.nome}...`;
+
+  for (let inicio = config.inicio; inicio <= config.fim; inicio += 12) {
+    if (token !== carregamento) return;
+
+    const ids = [];
+    for (let i = inicio; i < inicio + 12 && i <= config.fim; i++) {
+      ids.push(i);
+    }
+
+    const resultados = await Promise.all(ids.map(buscarPokemon));
+    if (token !== carregamento) return;
+
+    pokemonAtual.push(...resultados.filter(Boolean));
+    renderizar();
+
+    $("status").textContent =
+      `CARREGANDO ${config.nome}... ${pokemonAtual.length}/${total}`;
+  }
+
+  if (token === carregamento) {
+    $("status").textContent =
+      `${config.nome} CARREGADA — ${pokemonAtual.length} POKÉMON`;
+  }
+}
+
+function renderizar(lista = pokemonAtual) {
+  const grid = $("grid");
+  grid.innerHTML = "";
+
+  lista.forEach(pokemon => {
+    const tipo = pokemon.types[0].type.name;
+    const card = document.createElement("article");
+
+    card.className = "pokemon-card";
+    card.style.background = coresTipo[tipo] || "#555";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+
+    const numero = document.createElement("div");
+    numero.className = "numero";
+    numero.textContent = "#" + String(pokemon.id).padStart(3, "0");
+
+    const imagem = document.createElement("img");
+    imagem.className = "sprite";
+    imagem.alt = "Sprite de Pokémon";
+    imagem.loading = "lazy";
+    imagem.src = spriteCartao(pokemon);
+
+    const nome = document.createElement("div");
+    nome.className = "nome";
+    nome.textContent = formatarNome(pokemon.name);
+    card.setAttribute("aria-label", `Abrir ${nome.textContent}`);
+
+    /* Atualiza o nome quando a tradução da espécie chega. */
+    obterNomePT(pokemon).then(nomePT => {
+      nome.textContent = nomePT;
+      card.setAttribute("aria-label", `Abrir ${nomePT}`);
+    });
+
+    const tipos = document.createElement("div");
+    tipos.className = "tipos";
+    tipos.append(...criarTipos(pokemon.types));
+
+    card.append(numero, imagem, nome, tipos);
+
+    card.addEventListener("click", () => abrirPokemon(pokemon));
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        abrirPokemon(pokemon);
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+async function abrirPokemon(pokemon) {
+  const pedido = ++pedidoModal;
+  const modal = $("modal");
+  const tipo = pokemon.types[0].type.name;
+  const cor = coresTipo[tipo] || "#555";
+
+  $("modalCaixa").style.background = cor;
+  $("modalTopo").style.background = cor;
+  $("spriteContainer").style.backgroundColor = cor;
+
+  $("spriteGrande").src = spriteAnimado(pokemon);
+  $("spriteGrande").alt = `Sprite animado de ${formatarNome(pokemon.name)}`;
+
+  $("modalNumero").textContent = "#" + String(pokemon.id).padStart(3, "0");
+  $("modalNome").textContent = "CARREGANDO...";
+  $("descricao").textContent = "Buscando descrição em português...";
+  $("habilidades").textContent = "Carregando habilidades...";
+  $("modalTipos").replaceChildren(...criarTipos(pokemon.types));
+
+  $("statusPokemon").innerHTML = "";
+
+  pokemon.stats.forEach(stat => {
+    const linha = document.createElement("div");
+    linha.className = "status-linha";
+
+    const nome = document.createElement("div");
+    nome.className = "status-nome";
+    nome.textContent =
+      `${statsPT[stat.stat.name] || stat.stat.name}: ${stat.base_stat}`;
+
+    const barra = document.createElement("div");
+    barra.className = "barra";
+
+    const preenchimento = document.createElement("div");
+    preenchimento.style.width = Math.min(stat.base_stat / 2.55, 100) + "%";
+
+    barra.appendChild(preenchimento);
+    linha.append(nome, barra);
+    $("statusPokemon").appendChild(linha);
+  });
+
+  $("informacoesPokemon").textContent =
+    `ALTURA: ${(pokemon.height / 10).toFixed(1)} m | ` +
+    `PESO: ${(pokemon.weight / 10).toFixed(1)} kg | ` +
+    `EXPERIÊNCIA BASE: ${pokemon.base_experience ?? "—"}`;
+
+  modal.classList.add("ativo");
+  document.body.style.overflow = "hidden";
+  $("modalCaixa").scrollTop = 0;
+
+  const especie = await buscarEspecie(pokemon.id);
+  if (pedido !== pedidoModal) return;
+
+  $("modalNome").textContent = await obterNomePT(pokemon);
+  if (pedido !== pedidoModal) return;
+
+  $("descricao").textContent = await descricaoPortugues(especie);
+  if (pedido !== pedidoModal) return;
+
+  $("habilidades").textContent = "Carregando habilidades...";
+
+  const resultados = await Promise.all(
+    pokemon.abilities.map(async item => ({
+      nome: await buscarHabilidade(item.ability.url),
+      oculta: item.is_hidden
+    }))
+  );
+
+  if (pedido !== pedidoModal) return;
+
+  $("habilidades").replaceChildren();
+
+  resultados.forEach(item => {
+    const span = document.createElement("span");
+    span.className = "habilidade";
+    span.textContent = item.nome + (item.oculta ? " — OCULTA" : "");
+    $("habilidades").appendChild(span);
+  });
+}
+
+function fecharModal() {
+  $("modal").classList.remove("ativo");
+  document.body.style.overflow = "";
+  pedidoModal++;
+}
+
+$("gen2").addEventListener("click", () => carregarGeracao(2));
+$("gen4").addEventListener("click", () => carregarGeracao(4));
+$("fechar").addEventListener("click", fecharModal);
+
+$("modal").addEventListener("click", e => {
+  if (e.target === e.currentTarget) fecharModal();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") fecharModal();
+});
+
+$("pesquisa").addEventListener("input", function() {
+  const termo = this.value.toLocaleLowerCase("pt-BR").trim();
+
+  const filtrados = pokemonAtual.filter(pokemon => {
+    const nomeIngles = pokemon.name.toLocaleLowerCase("pt-BR");
+    const nomePT = (cacheNomes.get(pokemon.id) || "")
+      .toLocaleLowerCase("pt-BR");
+
+    return nomeIngles.includes(termo) ||
+      nomePT.includes(termo) ||
+      String(pokemon.id).includes(termo);
+  });
+
+  renderizar(filtrados);
+});
+
+carregarGeracao(2);
+</script>
+</body>
+</html>
